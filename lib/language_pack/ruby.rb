@@ -109,6 +109,7 @@ WARNING
         install_bower
         build_bower
         run_assets_precompile_rake_task
+        migrate_db
       end
       best_practice_warnings
       super
@@ -879,6 +880,22 @@ params = CGI.parse(uri.query || "")
         puts "Asset precompilation completed (#{"%.2f" % precompile.time}s)"
       else
         precompile_fail(precompile.output)
+      end
+    end
+  end
+
+  def migrate_db
+    instrument 'ruby.migrate_db' do
+
+      migrator = rake.task("db:migrate")
+      return true unless migrator.is_defined?
+
+      topic "Migrating the DB"
+      migrator.invoke(env: rake_env)
+      if migrator.success?
+        puts "DB migration completed (#{"%.2f" % migrator.time}s)"
+      else
+        error "DB Migration failed!"
       end
     end
   end
